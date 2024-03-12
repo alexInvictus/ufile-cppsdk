@@ -43,7 +43,8 @@ public:
    * 表示从头查询
    * @return: 0=成功，非0=失败
    */
-  int List(const std::string &bucket, const std::string &prefix, uint32_t count,
+  int List(const std::string &bucket, const std::string &prefix, 
+           const std::string &delimiter, uint32_t count,
            ListResult *result, bool *is_truncated, std::string *next_marker,
            const std::string &marker = "");
 

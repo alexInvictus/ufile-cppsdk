@@ -28,6 +28,7 @@ UFileList::UFileList() : delimiter_("") {}
 UFileList::~UFileList() {}
 
 int UFileList::List(const std::string &bucket, const std::string &prefix,
+                    const std::string &delimiter,
                     uint32_t count, ListResult *result, bool *is_truncated,
                     std::string *next_marker, const std::string &marker) {
   int64_t ret = InitGlobalConfig();
@@ -47,7 +48,7 @@ int UFileList::List(const std::string &bucket, const std::string &prefix,
   params["prefix"] = prefix;
   params["marker"] = marker;
   params["max-keys"] = std::to_string(count);
-  params["delimiter"] = delimiter_;
+  params["delimiter"] = delimiter;
   SetURL(params);
 
   //使用 HTTP 信息构建签名
@@ -279,20 +280,26 @@ int UFileList::ParseRsp(const char *body, ListResult *result,
   }
 
   // for ListDir
-  if (prefixes != nullptr) {
-    json_object *common_prefixes;
-    ret = JsonGetArray(root, "CommonPrefixes", common_prefixes);
-    int num_key = json_object_array_length(common_prefixes);
-    for (int i = 0; i < num_key; i++) {
-      json_object *common_prefix =
-          json_object_array_get_idx(common_prefixes, i);
-      std::string prefix;
-      ret = JsonGetString(common_prefix, "Prefix", prefix);
-      if (ret) {
-        json_object_put(root);
-        return ret;
-      }
+  json_object *common_prefixes;
+  ret = JsonGetArray(root, "CommonPrefixes", common_prefixes);
+  int num_key = json_object_array_length(common_prefixes);
+  for (int i = 0; i < num_key; i++) {
+    json_object *common_prefix =
+        json_object_array_get_idx(common_prefixes, i);
+    std::string prefix;
+    ret = JsonGetString(common_prefix, "Prefix", prefix);
+    if (ret) {
+      json_object_put(root);
+      return ret;
+    }
+    if (prefixes != nullptr) {
       prefixes->push_back(prefix);
+    }
+
+    if (result) {
+      ListResultEntry entry;
+      entry.filename = prefix;
+      result->push_back(entry);
     }
   }
 
