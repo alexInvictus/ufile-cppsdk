@@ -101,7 +101,6 @@ int UFilePut::Put(const std::string &bucket, const std::string &key,
 
   if (!ptr || size == 0) {
     UFILE_SET_ERROR(ERR_CPPSDK_INVALID_PARAM);
-    return ERR_CPPSDK_INVALID_PARAM;
   }
 
   int64_t ret = InitGlobalConfig();
